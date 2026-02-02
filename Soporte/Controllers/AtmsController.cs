@@ -50,19 +50,20 @@ namespace Soporte.Controllers
         // GET: Atms/Create
         public IActionResult Create()
         {
-            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "ciudad");
-            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "correo");
-            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "apellido");
-            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "Observaciones");
+            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "nombre");
+            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "nombre");
+            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "nombres");
+            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "tipo");
             return View();
         }
+
 
         // POST: Atms/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("id,nombre,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
+        public async Task<IActionResult> Create([Bind("id,nombre,nombres,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
         {
             if (ModelState.IsValid)
             {
@@ -70,9 +71,9 @@ namespace Soporte.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "ciudad", atmsModel.AgenciasModelId);
-            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "correo", atmsModel.BancosModelId);
-            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "apellido", atmsModel.GestoresModelId);
+            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "nombre", atmsModel.AgenciasModelId);
+            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "nombre", atmsModel.BancosModelId);
+            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "nombres", atmsModel.GestoresModelId);
             ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "Observaciones", atmsModel.MantenimientosModelId);
             return View(atmsModel);
         }
@@ -102,7 +103,7 @@ namespace Soporte.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("id,nombre,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
+        public async Task<IActionResult> Edit(int id, [Bind("id,nombre,nombres,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
         {
             if (id != atmsModel.id)
             {

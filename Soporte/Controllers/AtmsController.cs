@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -21,94 +20,80 @@ namespace Soporte.Controllers
         // GET: Atms
         public async Task<IActionResult> Index()
         {
-            var soporteDbContext = _context.Atms.Include(a => a.AgenciasModel).Include(a => a.BancosModel).Include(a => a.GestoresModel).Include(a => a.MantenimientosModel);
-            return View(await soporteDbContext.ToListAsync());
+            var atms = _context.Atms
+                .Include(a => a.AgenciasModel)
+                .Include(a => a.BancosModel)
+                .Include(a => a.GestoresModel)
+                .Include(a => a.MantenimientosModel);
+
+            return View(await atms.ToListAsync());
         }
 
         // GET: Atms/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var atmsModel = await _context.Atms
+            var atm = await _context.Atms
                 .Include(a => a.AgenciasModel)
                 .Include(a => a.BancosModel)
                 .Include(a => a.GestoresModel)
                 .Include(a => a.MantenimientosModel)
                 .FirstOrDefaultAsync(m => m.id == id);
-            if (atmsModel == null)
-            {
-                return NotFound();
-            }
 
-            return View(atmsModel);
+            if (atm == null) return NotFound();
+
+            return View(atm);
         }
 
         // GET: Atms/Create
         public IActionResult Create()
         {
-            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "nombre");
-            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "nombre");
-            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "nombres");
-            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "tipo");
+            CargarDropdowns();
             return View();
         }
 
-
         // POST: Atms/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("id,nombre,nombres,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
+        public async Task<IActionResult> Create(AtmsModel atmsModel)
         {
+            Console.WriteLine("Entró al POST Create"); // 👈 prueba
             if (ModelState.IsValid)
             {
                 _context.Add(atmsModel);
                 await _context.SaveChangesAsync();
+                Console.WriteLine("ATM guardado correctamente con ID: " + atmsModel.id);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "nombre", atmsModel.AgenciasModelId);
-            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "nombre", atmsModel.BancosModelId);
-            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "nombres", atmsModel.GestoresModelId);
-            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "Observaciones", atmsModel.MantenimientosModelId);
+
+            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            {
+                Console.WriteLine("Error: " + error.ErrorMessage);
+            }
+
             return View(atmsModel);
         }
+
 
         // GET: Atms/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var atmsModel = await _context.Atms.FindAsync(id);
-            if (atmsModel == null)
-            {
-                return NotFound();
-            }
-            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "ciudad", atmsModel.AgenciasModelId);
-            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "correo", atmsModel.BancosModelId);
-            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "apellido", atmsModel.GestoresModelId);
-            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "Observaciones", atmsModel.MantenimientosModelId);
-            return View(atmsModel);
+            var atm = await _context.Atms.FindAsync(id);
+            if (atm == null) return NotFound();
+
+            CargarDropdowns(atm);
+            return View(atm);
         }
 
         // POST: Atms/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("id,nombre,nombres,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
+        public async Task<IActionResult> Edit(int id, [Bind("id,nombre,direccion,tipo,modelo,GestoresModelId,MantenimientosModelId,AgenciasModelId,BancosModelId")] AtmsModel atmsModel)
         {
-            if (id != atmsModel.id)
-            {
-                return NotFound();
-            }
+            if (id != atmsModel.id) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -116,47 +101,47 @@ namespace Soporte.Controllers
                 {
                     _context.Update(atmsModel);
                     await _context.SaveChangesAsync();
+                    Console.WriteLine("ATM actualizado correctamente.");
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!AtmsModelExists(atmsModel.id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!AtmsModelExists(atmsModel.id)) return NotFound();
+                    else throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error al actualizar: " + ex.Message);
+                }
             }
-            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "ciudad", atmsModel.AgenciasModelId);
-            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "correo", atmsModel.BancosModelId);
-            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "apellido", atmsModel.GestoresModelId);
-            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "Observaciones", atmsModel.MantenimientosModelId);
+            else
+            {
+                var errores = ModelState.Values.SelectMany(v => v.Errors);
+                foreach (var error in errores)
+                {
+                    Console.WriteLine("Error de validación: " + error.ErrorMessage);
+                }
+            }
+
+            CargarDropdowns(atmsModel);
             return View(atmsModel);
         }
 
         // GET: Atms/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var atmsModel = await _context.Atms
+            var atm = await _context.Atms
                 .Include(a => a.AgenciasModel)
                 .Include(a => a.BancosModel)
                 .Include(a => a.GestoresModel)
                 .Include(a => a.MantenimientosModel)
                 .FirstOrDefaultAsync(m => m.id == id);
-            if (atmsModel == null)
-            {
-                return NotFound();
-            }
 
-            return View(atmsModel);
+            if (atm == null) return NotFound();
+
+            return View(atm);
         }
 
         // POST: Atms/Delete/5
@@ -164,19 +149,28 @@ namespace Soporte.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var atmsModel = await _context.Atms.FindAsync(id);
-            if (atmsModel != null)
+            var atm = await _context.Atms.FindAsync(id);
+            if (atm != null)
             {
-                _context.Atms.Remove(atmsModel);
+                _context.Atms.Remove(atm);
+                await _context.SaveChangesAsync();
+                Console.WriteLine("ATM eliminado.");
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool AtmsModelExists(int id)
         {
             return _context.Atms.Any(e => e.id == id);
+        }
+
+        private void CargarDropdowns(AtmsModel? atm = null)
+        {
+            ViewData["AgenciasModelId"] = new SelectList(_context.Agencias, "id", "nombre", atm?.AgenciasModelId);
+            ViewData["BancosModelId"] = new SelectList(_context.Bancos, "id", "nombre", atm?.BancosModelId);
+            ViewData["GestoresModelId"] = new SelectList(_context.Gestores, "id", "nombres", atm?.GestoresModelId);
+            ViewData["MantenimientosModelId"] = new SelectList(_context.Mantenimientos, "id", "tipo", atm?.MantenimientosModelId);
         }
     }
 }

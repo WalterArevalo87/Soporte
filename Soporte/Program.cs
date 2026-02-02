@@ -16,10 +16,12 @@ builder.Services.AddDbContext<SoporteDbContext>(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registrar Identity con cuentas individuales
+// Registrar Identity con cuentas individuales (sin confirmación de cuenta)
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-        options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+{
+    options.SignIn.RequireConfirmedAccount = false; // 👈 desactivado
+})
+.AddEntityFrameworkStores<ApplicationDbContext>();
 
 // MVC y Razor Pages
 builder.Services.AddControllersWithViews();
@@ -49,10 +51,10 @@ app.UseRouting();
 app.UseAuthentication();   // primero
 app.UseAuthorization();    // después
 
+// 👈 Ruta por defecto hacia AtmsController
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Atms}/{action=Index}/{id?}");
 app.MapRazorPages();
 
 app.Run();
-
